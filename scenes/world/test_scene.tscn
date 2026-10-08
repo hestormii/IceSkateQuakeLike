@@ -1,0 +1,39 @@
+[gd_scene format=3 uid="uid://cbu6lqq420i76"]
+
+[ext_resource type="PackedScene" uid="uid://bs72ogkvdd7d6" path="res://scenes/proto_controller.tscn" id="1_t4wbk"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_jd5jl"]
+sky_top_color = Color(0.49431586, 0.5124426, 1, 1)
+sky_horizon_color = Color(5.583167e-06, 0.7224956, 0.9036394, 1)
+
+[sub_resource type="Sky" id="Sky_mulwc"]
+sky_material = SubResource("ProceduralSkyMaterial_jd5jl")
+
+[sub_resource type="Environment" id="Environment_j66o4"]
+background_mode = 2
+sky = SubResource("Sky_mulwc")
+
+[node name="TestScene" type="Node3D" unique_id=1251086]
+
+[node name="floor" type="CSGBox3D" parent="." unique_id=1673945244]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.246521, 0)
+use_collision = true
+collision_mask = 2
+size = Vector3(40.624023, 0.506958, 42.801025)
+
+[node name="wall" type="CSGBox3D" parent="." unique_id=2124410378]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.7307434, -2.9527283)
+use_collision = true
+collision_mask = 2
+size = Vector3(23.422852, 8.461487, 4.2854004)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1429325942]
+environment = SubResource("Environment_j66o4")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=339776181]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 13, 0)
+
+[node name="ProtoController" parent="." unique_id=1958025689 instance=ExtResource("1_t4wbk")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 9)
+acceleration = 0.5
+max_speed = 2.0

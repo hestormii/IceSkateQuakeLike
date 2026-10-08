@@ -1,0 +1,64 @@
+[gd_scene format=3 uid="uid://bs72ogkvdd7d6"]
+
+[ext_resource type="Script" uid="uid://brc02s2dw37h3" path="res://scripts/proto_controller.gd" id="1_qhypi"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_iof21"]
+albedo_color = Color(0.91806, 0.575202, 0.222449, 1)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_ucva2"]
+radius = 0.4
+height = 1.8
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_iof21"]
+radius = 0.4
+height = 1.8
+
+[node name="ProtoController" type="CharacterBody3D" unique_id=1958025689]
+collision_layer = 2
+script = ExtResource("1_qhypi")
+min_speed = 0.05
+acceleration = 0.05
+max_speed = 1.0
+input_right = "right"
+input_forward = "forward"
+input_back = "backward"
+input_jump = "jump"
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=982331620]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+material_override = SubResource("StandardMaterial3D_iof21")
+cast_shadow = 0
+mesh = SubResource("CapsuleMesh_ucva2")
+
+[node name="Collider" type="CollisionShape3D" parent="." unique_id=248832625]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_iof21")
+
+[node name="Head" type="Node3D" parent="." unique_id=1624145456]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
+
+[node name="Camera3D" type="Camera3D" parent="Head" unique_id=146974156]
+
+[node name="min_speed" type="Label" parent="." unique_id=229163174]
+offset_left = 33.999996
+offset_top = 121.99999
+offset_right = 82.0
+offset_bottom = 145.0
+scale = Vector2(2.5, 2.5)
+text = "Speed"
+
+[node name="max_speed" type="Label" parent="." unique_id=1585689575]
+offset_left = 35.0
+offset_top = 9.000008
+offset_right = 82.0
+offset_bottom = 32.000008
+scale = Vector2(2.5, 2.5)
+text = "speed"
+
+[node name="speed" type="Label" parent="." unique_id=115552469]
+offset_left = 34.999996
+offset_top = 63.999996
+offset_right = 83.0
+offset_bottom = 87.0
+scale = Vector2(2.5, 2.5)
+text = "Speed"
