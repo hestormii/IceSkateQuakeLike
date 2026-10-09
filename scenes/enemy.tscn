@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://c87to7kyex244"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mulwc"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_j66o4"]
+
+[node name="Enemy" type="CharacterBody3D" unique_id=1762450698 groups=["Enemy"]]
+collision_layer = 4
+collision_mask = 3
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=685705436]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("CapsuleShape3D_mulwc")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=745319081]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+mesh = SubResource("CapsuleMesh_j66o4")
