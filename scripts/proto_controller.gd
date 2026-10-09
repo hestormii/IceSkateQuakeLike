@@ -1,131 +1,190 @@
 extends CharacterBody3D
 
-## Can we move around?
-@export var can_move : bool = true
-## Are we affected by gravity?
-@export var has_gravity : bool = true
-## Can we press to jump?
-@export var can_jump : bool = true
-## Can we hold to run?
-@export var can_sprint : bool = false
-## Can we press to enter freefly mode (noclip)?
-@export var can_freefly : bool = false
+enum State { SKATE, WALL_RUN }
 
-@export_group("Speeds")
-## Look around rotation speed.
-@export var look_speed : float = 0.002
-## Normal speed.
-@export var min_speed : float = 1.0
-@export var speed : float = 0
-@export var acceleration: float = 2.0
-@export var max_speed: float = 25.0
-## Speed of jump.
+const MIN_STRAFE_INTO_WALL := 0.5
+const WALL_RUN_EXIT_RATIO := 0.5
+
+@export var can_move : bool = true
+@export var has_gravity : bool = true
+@export var can_jump : bool = true
+@export var can_brake : bool = true
+@export var can_wall_run : bool = true
+
+@export_group("Skating")
+@export var top_speed : float = 15.0
+@export var push_acceleration : float = 15.0
+@export var ice_friction : float = 2.5
+@export var brake_deceleration : float = 25.0
+@export_range(0.0, 1.0) var air_control : float = 0.4
 @export var jump_velocity : float = 4.5
-## How fast do we run?
-@export var sprint_speed : float = 10.0
-## How fast do we freefly?
-@export var freefly_speed : float = 25.0
+
+@export_group("Wall Run")
+@export var wall_run_min_speed : float = 6.0
+@export var wall_stick_speed : float = 2.0
+@export var wall_jump_push : float = 6.0
+@export var wall_jump_lift : float = 5.0
+@export var wall_run_cooldown : float = 0.3
+
+@export_group("Look")
+@export var look_speed : float = 0.002
 
 @export_group("Input Actions")
-## Name of Input Action to move Left.
 @export var input_left : String = "left"
-## Name of Input Action to move Right.
-@export var input_right : String = "ui_right"
-## Name of Input Action to move Forward.
-@export var input_forward : String = "ui_up"
-## Name of Input Action to move Backward.
-@export var input_back : String = "ui_down"
-## Name of Input Action to Jump.
-@export var input_jump : String = "ui_accept"
-## Name of Input Action to Sprint.
-@export var input_sprint : String = "sprint"
-## Name of Input Action to toggle freefly mode.
+@export var input_right : String = "right"
+@export var input_forward : String = "forward"
+@export var input_back : String = "backward"
+@export var input_jump : String = "jump"
+@export var input_brake : String = "brake"
 
+var state : State = State.SKATE
+var wall_normal : Vector3 = Vector3.ZERO
+var wall_cooldown_left : float = 0.0
 var mouse_captured : bool = false
 var look_rotation : Vector2
-var move_speed : float = 0.0
-var is_moving = false
+var hooked := false
 
-## IMPORTANT REFERENCES
 @onready var head: Node3D = $Head
-@onready var collider: CollisionShape3D = $Collider
-@onready var Lmin_speed: Label = $min_speed
-@onready var Lmax_speed: Label = $max_speed
-@onready var Lspeed: Label = $speed
+@onready var speed_label: Label = $speed
+@onready var top_speed_label: Label = $max_speed
+@onready var state_label: Label = $min_speed
+@onready var ray_cast_3d: RayCast3D = $Head/Camera3D/RayCast3D
+@onready var point: Marker3D = $Point
+
 
 func _ready() -> void:
 	check_input_mappings()
 	look_rotation.y = rotation.y
 	look_rotation.x = head.rotation.x
 
+
 func _unhandled_input(event: InputEvent) -> void:
-	# Mouse capturing
 	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		capture_mouse()
 	if Input.is_key_pressed(KEY_ESCAPE):
 		release_mouse()
-	
-	# Look around
+
 	if mouse_captured and event is InputEventMouseMotion:
 		rotate_look(event.relative)
-	
+
 
 func _physics_process(delta: float) -> void:
-	
-	# Apply gravity to velocity
-	if has_gravity:
-		if not is_on_floor():
-			velocity += get_gravity() * delta
+	wall_cooldown_left = maxf(wall_cooldown_left - delta, 0.0)
 
-	# Apply jumping
-	if can_jump:
-		if Input.is_action_just_pressed(input_jump) and is_on_floor():
-			velocity.y = jump_velocity
-
-	# Modify speed based on sprinting
-	if can_sprint and Input.is_action_pressed(input_sprint):
-			move_speed = sprint_speed
-	else:
-		speed += min_speed * acceleration
-		move_speed += speed
-		if speed > max_speed:
-			speed = max_speed
-
-
-	# Apply desired movement to velocity
+	var input_dir := Vector2.ZERO
 	if can_move:
-		var input_dir := Input.get_vector(input_left, input_right, input_forward, input_back)
-		var move_dir := (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
-		if move_dir:
-			velocity.x = move_dir.x * move_speed
-			velocity.z = move_dir.z * move_speed
-		else:
-			velocity.x = move_toward(velocity.x, 0, move_speed)
-			velocity.z = move_toward(velocity.z, 0, move_speed)
+		input_dir = Input.get_vector(input_left, input_right, input_forward, input_back)
+
+	if state == State.SKATE:
+		skate(delta, input_dir)
 	else:
-		velocity.x = 0
-		velocity.y = 0
-	
-	if not is_moving:
-		speed -= 1.0
-		if speed < min_speed:
-			speed = min_speed
-	if speed > max_speed:
-		speed = max_speed
-	
-	# Use velocity to actually move
+		wall_run()
+
 	move_and_slide()
 
+	if state == State.SKATE:
+		try_start_wall_run(input_dir)
+	else:
+		update_wall_run()
 
-func _process(delta: float) -> void:
-	Lspeed.text = "Speed: " + str(speed)
-	Lmax_speed.text = "Max Speed: " + str(max_speed)
-	Lmin_speed.text = "Min Speed: " + str(min_speed)
 
-## Rotate us to look around.
-## Base of controller rotates around y (left/right). Head rotates around x (up/down).
-## Modifies look_rotation based on rot_input, then resets basis and rotates by look_rotation.
-func rotate_look(rot_input : Vector2):
+func _process(_delta: float) -> void:
+	speed_label.text = "Speed: %.1f" % Vector2(velocity.x, velocity.z).length()
+	top_speed_label.text = "Top speed: %.1f" % top_speed
+	state_label.text = "State: %s" % State.keys()[state]
+	if Input.is_action_just_pressed("hook"):
+		hook()
+
+
+func skate(delta: float, input_dir: Vector2) -> void:
+	var grounded := is_on_floor()
+
+	if has_gravity and not grounded:
+		velocity += get_gravity() * delta
+
+	if can_jump and grounded and Input.is_action_just_pressed(input_jump):
+		velocity.y = jump_velocity
+
+	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
+	var wish_dir := global_basis * Vector3(input_dir.x, 0.0, input_dir.y)
+
+	if can_brake and grounded and Input.is_action_pressed(input_brake):
+		horizontal = horizontal.move_toward(Vector3.ZERO, brake_deceleration * delta)
+	elif wish_dir != Vector3.ZERO:
+		var control := 1.0 if grounded else air_control
+		var speed_cap := maxf(top_speed, horizontal.length())
+		horizontal += wish_dir * push_acceleration * control * delta
+		horizontal = horizontal.limit_length(speed_cap)
+	elif grounded:
+		horizontal = horizontal.move_toward(Vector3.ZERO, ice_friction * delta)
+
+	velocity.x = horizontal.x
+	velocity.z = horizontal.z
+
+
+func try_start_wall_run(input_dir: Vector2) -> void:
+	if not can_wall_run or wall_cooldown_left > 0.0:
+		return
+	if is_on_floor() or not is_on_wall() or input_dir.x == 0.0:
+		return
+
+	var normal := flat_wall_normal()
+	var strafe_dir := global_basis.x * signf(input_dir.x)
+	if strafe_dir.dot(-normal) < MIN_STRAFE_INTO_WALL:
+		return
+
+	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
+	var along := wall_tangent(normal, horizontal)
+	if horizontal.dot(along) < wall_run_min_speed:
+		return
+
+	state = State.WALL_RUN
+	wall_normal = normal
+	velocity.y = 0.0
+
+
+func wall_run() -> void:
+	if can_jump and Input.is_action_just_pressed(input_jump):
+		wall_jump()
+		return
+
+	var horizontal := Vector3(velocity.x, 0.0, velocity.z)
+	var along := wall_tangent(wall_normal, horizontal)
+	var speed_along := horizontal.dot(along)
+	if speed_along < wall_run_min_speed * WALL_RUN_EXIT_RATIO:
+		state = State.SKATE
+		return
+
+	velocity = along * speed_along - wall_normal * wall_stick_speed
+
+
+func update_wall_run() -> void:
+	if not is_on_wall() or is_on_floor():
+		state = State.SKATE
+		return
+	wall_normal = flat_wall_normal()
+
+
+func wall_jump() -> void:
+	velocity += wall_normal * wall_jump_push
+	velocity.y = wall_jump_lift
+	wall_cooldown_left = wall_run_cooldown
+	state = State.SKATE
+
+
+func flat_wall_normal() -> Vector3:
+	var normal := get_wall_normal()
+	return Vector3(normal.x, 0.0, normal.z).normalized()
+
+
+func wall_tangent(normal: Vector3, heading: Vector3) -> Vector3:
+	var along := Vector3.UP.cross(normal).normalized()
+	if along.dot(heading) < 0.0:
+		along = -along
+	return along
+
+
+func rotate_look(rot_input : Vector2) -> void:
 	look_rotation.x -= rot_input.y * look_speed
 	look_rotation.x = clamp(look_rotation.x, deg_to_rad(-85), deg_to_rad(85))
 	look_rotation.y -= rot_input.x * look_speed
@@ -135,37 +194,37 @@ func rotate_look(rot_input : Vector2):
 	head.rotate_x(look_rotation.x)
 
 
-
-
-
-func capture_mouse():
+func capture_mouse() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	mouse_captured = true
 
 
-func release_mouse():
+func release_mouse() -> void:
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	mouse_captured = false
 
 
-## Checks if some Input Actions haven't been created.
-## Disables functionality accordingly.
-func check_input_mappings():
-	if can_move and not InputMap.has_action(input_left):
-		push_error("Movement disabled. No InputAction found for input_left: " + input_left)
-		can_move = false
-	if can_move and not InputMap.has_action(input_right):
-		push_error("Movement disabled. No InputAction found for input_right: " + input_right)
-		can_move = false
-	if can_move and not InputMap.has_action(input_forward):
-		push_error("Movement disabled. No InputAction found for input_forward: " + input_forward)
-		can_move = false
-	if can_move and not InputMap.has_action(input_back):
-		push_error("Movement disabled. No InputAction found for input_back: " + input_back)
-		can_move = false
+func check_input_mappings() -> void:
+	if can_move:
+		for action in [input_left, input_right, input_forward, input_back]:
+			if not InputMap.has_action(action):
+				push_error("Movement disabled. No InputAction found: " + action)
+				can_move = false
+				break
 	if can_jump and not InputMap.has_action(input_jump):
 		push_error("Jumping disabled. No InputAction found for input_jump: " + input_jump)
 		can_jump = false
-	if can_sprint and not InputMap.has_action(input_sprint):
-		push_error("Sprinting disabled. No InputAction found for input_sprint: " + input_sprint)
-		can_sprint = false
+	if can_brake and not InputMap.has_action(input_brake):
+		push_error("Braking disabled. No InputAction found for input_brake: " + input_brake)
+		can_brake = false
+
+func hook():
+	ray_cast_3d.enabled = true
+	var collider = ray_cast_3d.get_collider()
+	var collider_point = ray_cast_3d.get_collision_point()
+	if ray_cast_3d.is_colliding():
+		print(collider)
+		point.global_position = collider_point
+		hooked = true
+		while hooked:
+			position = position.move_toward(collider_point, 1.0)

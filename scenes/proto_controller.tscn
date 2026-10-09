@@ -13,16 +13,13 @@ height = 1.8
 radius = 0.4
 height = 1.8
 
+[sub_resource type="SeparationRayShape3D" id="SeparationRayShape3D_j66o4"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_j66o4"]
+
 [node name="ProtoController" type="CharacterBody3D" unique_id=1958025689]
 collision_layer = 2
 script = ExtResource("1_qhypi")
-min_speed = 0.05
-acceleration = 0.05
-max_speed = 1.0
-input_right = "right"
-input_forward = "forward"
-input_back = "backward"
-input_jump = "jump"
 
 [node name="Mesh" type="MeshInstance3D" parent="." unique_id=982331620]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
@@ -38,6 +35,15 @@ shape = SubResource("CapsuleShape3D_iof21")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
 
 [node name="Camera3D" type="Camera3D" parent="Head" unique_id=146974156]
+
+[node name="RayCast3D" type="RayCast3D" parent="Head/Camera3D" unique_id=1354048943]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.23119378, 0)
+enabled = false
+target_position = Vector3(0, 0, -25)
+
+[node name="SpringArm3D" type="SpringArm3D" parent="Head/Camera3D/RayCast3D" unique_id=573163021]
+shape = SubResource("SeparationRayShape3D_j66o4")
+spring_length = -25.0
 
 [node name="min_speed" type="Label" parent="." unique_id=229163174]
 offset_left = 33.999996
@@ -62,3 +68,8 @@ offset_right = 83.0
 offset_bottom = 87.0
 scale = Vector2(2.5, 2.5)
 text = "Speed"
+
+[node name="Point" type="Marker3D" parent="." unique_id=1156509407]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Point" unique_id=2121115611]
+mesh = SubResource("BoxMesh_j66o4")
