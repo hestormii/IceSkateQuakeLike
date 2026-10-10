@@ -1,12 +1,18 @@
 [gd_scene format=3 uid="uid://c87to7kyex244"]
 
+[ext_resource type="Script" uid="uid://bhy6xh2ed3ibk" path="res://scripts/enemy.gd" id="1_7p1mj"]
+
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mulwc"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_j66o4"]
 
+[sub_resource type="SphereShape3D" id="SphereShape3D_j66o4"]
+radius = 8.368996
+
 [node name="Enemy" type="CharacterBody3D" unique_id=1762450698 groups=["Enemy"]]
 collision_layer = 4
 collision_mask = 3
+script = ExtResource("1_7p1mj")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=685705436]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
@@ -15,3 +21,21 @@ shape = SubResource("CapsuleShape3D_mulwc")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=745319081]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 mesh = SubResource("CapsuleMesh_j66o4")
+
+[node name="Detect" type="Area3D" parent="." unique_id=1783075129]
+collision_layer = 4
+collision_mask = 2
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Detect" unique_id=1325324015]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7288015, 0)
+shape = SubResource("SphereShape3D_j66o4")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="." unique_id=2120516930]
+simplify_path = true
+
+[node name="UpdatePlayer" type="Timer" parent="." unique_id=638140998]
+wait_time = 0.2
+
+[connection signal="body_entered" from="Detect" to="." method="_on_detect_body_entered"]
+[connection signal="body_shape_entered" from="Detect" to="." method="_on_detect_body_shape_entered"]
+[connection signal="timeout" from="UpdatePlayer" to="." method="_on_update_player_timeout"]

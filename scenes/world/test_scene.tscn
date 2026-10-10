@@ -1,9 +1,7 @@
 [gd_scene format=3 uid="uid://cbu6lqq420i76"]
 
 [ext_resource type="PackedScene" uid="uid://bs72ogkvdd7d6" path="res://scenes/proto_controller.tscn" id="1_t4wbk"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_t4wbk"]
-albedo_color = Color(0.4726752, 0.4726752, 0.4726752, 1)
+[ext_resource type="PackedScene" uid="uid://c87to7kyex244" path="res://scenes/enemy.tscn" id="2_j1f80"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_jd5jl"]
 sky_top_color = Color(0.49431586, 0.5124426, 1, 1)
@@ -16,20 +14,26 @@ sky_material = SubResource("ProceduralSkyMaterial_jd5jl")
 background_mode = 2
 sky = SubResource("Sky_mulwc")
 
-[node name="TestScene" type="Node3D" unique_id=1251086]
+[sub_resource type="NavigationMesh" id="NavigationMesh_j66o4"]
+vertices = PackedVector3Array(-105.323364, 0.5, -102.21443, -105.323364, 0.5, 53.78557, 105.426636, 0.5, 53.78557, 105.426636, 0.5, -102.21443)
+polygons = [PackedInt32Array(3, 2, 0), PackedInt32Array(0, 2, 1)]
 
-[node name="floor" type="CSGBox3D" parent="." unique_id=1673945244]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.246521, 0)
-use_collision = true
-collision_mask = 2
-size = Vector3(211.64673, 0.506958, 93.041016)
-material = SubResource("StandardMaterial3D_t4wbk")
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_t4wbk"]
+albedo_color = Color(0.4726752, 0.4726752, 0.4726752, 1)
+
+[node name="TestScene" type="Node3D" unique_id=1251086]
 
 [node name="wall" type="CSGBox3D" parent="." unique_id=2124410378]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.97942, -2.9527283)
 use_collision = true
 collision_mask = 2
 size = Vector3(73.921875, 18.95884, 4.2854004)
+
+[node name="ceiling" type="CSGBox3D" parent="." unique_id=9236415]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 17.685055, -21.209969)
+use_collision = true
+collision_mask = 2
+size = Vector3(73.921875, 1.5475712, 36.382813)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1429325942]
 environment = SubResource("Environment_j66o4")
@@ -41,3 +45,17 @@ shadow_enabled = true
 
 [node name="ProtoController" parent="." unique_id=1958025689 instance=ExtResource("1_t4wbk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 9)
+
+[node name="Enemy" parent="." unique_id=1762450698 instance=ExtResource("2_j1f80")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 0, 27)
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=65607577]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -7.7977724)
+navigation_mesh = SubResource("NavigationMesh_j66o4")
+
+[node name="floor" type="CSGBox3D" parent="NavigationRegion3D" unique_id=1673945244]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.246521, -24.198078)
+use_collision = true
+collision_mask = 2
+size = Vector3(211.64673, 0.506958, 157.03271)
+material = SubResource("StandardMaterial3D_t4wbk")

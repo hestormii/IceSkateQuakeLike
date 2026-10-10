@@ -13,13 +13,15 @@ height = 1.8
 radius = 0.4
 height = 1.8
 
-[sub_resource type="SeparationRayShape3D" id="SeparationRayShape3D_j66o4"]
-
 [sub_resource type="BoxMesh" id="BoxMesh_j66o4"]
 
-[node name="ProtoController" type="CharacterBody3D" unique_id=1958025689]
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_j66o4"]
+
+[node name="ProtoController" type="CharacterBody3D" unique_id=1958025689 groups=["Player"]]
 collision_layer = 2
+collision_mask = 5
 script = ExtResource("1_qhypi")
+hook_cooldown = 0.1
 
 [node name="Mesh" type="MeshInstance3D" parent="." unique_id=982331620]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
@@ -36,16 +38,27 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
 
 [node name="Camera3D" type="Camera3D" parent="Head" unique_id=146974156]
 
-[node name="RayCast3D" type="RayCast3D" parent="Head/Camera3D" unique_id=1354048943]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.23119378, 0)
-enabled = false
-target_position = Vector3(0, 0, -25)
+[node name="vision" type="RayCast3D" parent="Head/Camera3D" unique_id=1788343997]
+target_position = Vector3(0, 0, -40)
+collision_mask = 17
 
-[node name="SpringArm3D" type="SpringArm3D" parent="Head/Camera3D/RayCast3D" unique_id=573163021]
-shape = SubResource("SeparationRayShape3D_j66o4")
-spring_length = -25.0
+[node name="Point" type="Marker3D" parent="." unique_id=1156509407]
 
-[node name="min_speed" type="Label" parent="." unique_id=229163174]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Point" unique_id=2121115611]
+visible = false
+mesh = SubResource("BoxMesh_j66o4")
+
+[node name="Ui" type="Control" parent="." unique_id=38792796]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="min_speed" type="Label" parent="Ui" unique_id=229163174]
+layout_mode = 0
 offset_left = 33.999996
 offset_top = 121.99999
 offset_right = 82.0
@@ -53,7 +66,8 @@ offset_bottom = 145.0
 scale = Vector2(2.5, 2.5)
 text = "Speed"
 
-[node name="max_speed" type="Label" parent="." unique_id=1585689575]
+[node name="max_speed" type="Label" parent="Ui" unique_id=1585689575]
+layout_mode = 0
 offset_left = 35.0
 offset_top = 9.000008
 offset_right = 82.0
@@ -61,7 +75,8 @@ offset_bottom = 32.000008
 scale = Vector2(2.5, 2.5)
 text = "speed"
 
-[node name="speed" type="Label" parent="." unique_id=115552469]
+[node name="speed" type="Label" parent="Ui" unique_id=115552469]
+layout_mode = 0
 offset_left = 34.999996
 offset_top = 63.999996
 offset_right = 83.0
@@ -69,7 +84,30 @@ offset_bottom = 87.0
 scale = Vector2(2.5, 2.5)
 text = "Speed"
 
-[node name="Point" type="Marker3D" parent="." unique_id=1156509407]
+[node name="ColorRect" type="ColorRect" parent="Ui" unique_id=284764249]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Point" unique_id=2121115611]
-mesh = SubResource("BoxMesh_j66o4")
+[node name="Area3D" type="Area3D" parent="." unique_id=1220659816]
+collision_layer = 2
+collision_mask = 4
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D" unique_id=1135181305]
+shape = SubResource("CapsuleShape3D_j66o4")
+
+[node name="PlayerPos" type="Timer" parent="." unique_id=1472731856]
+wait_time = 0.2
+autostart = true
+
+[connection signal="timeout" from="PlayerPos" to="." method="_on_player_pos_timeout"]
